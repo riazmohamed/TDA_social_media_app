@@ -41,12 +41,9 @@ const PostCard = ({ post, onLikeToggle }: PostCardProps) => {
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <Link 
-              href={`/profile/${post.user.id}`}
-              className="font-medium text-neutral-900 hover:text-primary-600 transition-colors duration-200"
-            >
+            <span className="font-medium text-neutral-900">
               {post.user.username}
-            </Link>
+            </span>
             <span className="text-neutral-500 text-sm">
               ·
             </span>
@@ -55,8 +52,8 @@ const PostCard = ({ post, onLikeToggle }: PostCardProps) => {
             </span>
           </div>
           
-          <Link 
-            href={`/posts/${post.id}`}
+          <Link
+            href={`/posts?id=${post.id}`}
             className="block text-neutral-900 mb-3 hover:text-neutral-700 transition-colors duration-200"
           >
             <p className="whitespace-pre-wrap break-words">
@@ -71,8 +68,8 @@ const PostCard = ({ post, onLikeToggle }: PostCardProps) => {
               onToggleLike={() => onLikeToggle(post.id)}
             />
             
-            <Link 
-              href={`/posts/${post.id}`}
+            <Link
+              href={`/posts?id=${post.id}`}
               className="text-neutral-600 hover:text-primary-600 transition-colors duration-200"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

@@ -1,26 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import Layout from '@/components/organisms/Layout';
 import { Avatar, Button } from '@/components';
 import LikeButton from '@/components/molecules/LikeButton';
 import { useDatabase } from '@/lib/db';
 
-export default function PostDetailPage() {
-  const params = useParams();
+function PostDetailContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const postId = searchParams.get('id');
   const { activeUser, getPostWithUser, toggleLike } = useDatabase();
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<ReturnType<typeof getPostWithUser>>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    if (params.id && activeUser) {
-      const postData = getPostWithUser(params.id as string, activeUser.id);
+    if (postId && activeUser) {
+      const postData = getPostWithUser(postId, activeUser.id);
       setPost(postData);
       setIsLoading(false);
+    } else if (!activeUser) {
+      setIsLoading(false);
     }
-  }, [params.id, activeUser, getPostWithUser]);
+  }, [postId, activeUser, getPostWithUser]);
   
   const handleLikeToggle = () => {
     if (post && activeUser) {
@@ -33,20 +36,30 @@ export default function PostDetailPage() {
     }
   };
   
-  const handleDelete = () => {
-    if (post && activeUser && post.user.id === activeUser.id) {
-      if (confirm('Are you sure you want to delete this post?')) {
-        // Delete functionality would be implemented here
-        // For now, just navigate back to feed
-        router.push('/feed');
-      }
-    }
-  };
-  
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
+  
+  if (!postId) {
+    return (
+      <Layout activeUser={activeUser}>
+        <div className="flex justify-center items-center min-h-96">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-neutral-900 mb-4">
+              No Post Selected
+            </h2>
+            <p className="text-neutral-600 mb-6">
+              Please select a post from the feed to view details.
+            </p>
+            <Button onClick={() => router.push('/feed')}>
+              Go to Feed
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   
   if (isLoading) {
     return (
@@ -67,7 +80,7 @@ export default function PostDetailPage() {
               Post not found
             </h2>
             <p className="text-neutral-600 mb-6">
-              The post you're looking for doesn't exist or has been deleted.
+              The post you are looking for does not exist or has been deleted.
             </p>
             <Button onClick={() => router.push('/feed')}>
               Go back to feed
@@ -112,18 +125,28 @@ export default function PostDetailPage() {
               onToggleLike={handleLikeToggle}
             />
             
-            {activeUser && post.user.id === activeUser.id && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleDelete}
-              >
-                Delete
-              </Button>
-            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => router.push('/feed')}
+            >
+              Back to Feed
+            </Button>
           </div>
         </article>
       </div>
     </Layout>
+  );
+}
+
+export default function PostsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+        <div className="text-neutral-500">Loading...</div>
+      </div>
+    }>
+      <PostDetailContent />
+    </Suspense>
   );
 }
