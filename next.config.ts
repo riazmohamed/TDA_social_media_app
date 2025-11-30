@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   basePath: `/${repo}`,
   assetPrefix: `/${repo}/`,
   
+  // Required for static export to work with GitHub Pages
+  trailingSlash: true,
+  
   // Disable default Image Optimization
   images: {
     unoptimized: true,
