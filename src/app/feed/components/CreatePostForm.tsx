@@ -126,11 +126,11 @@ const CreatePostForm = () => {
                 <button
                   type="submit"
                   disabled={!canPost}
-                  className={`font-bold px-4 py-1.5 rounded-full text-[15px] transition-all ${
-                    canPost
-                      ? 'bg-brand hover:bg-brand-hover text-white cursor-pointer'
-                      : 'bg-brand/50 text-white/70 cursor-not-allowed'
-                  }`}
+                  style={{
+                    backgroundColor: canPost ? '#1d9bf0' : 'rgba(29, 155, 240, 0.5)',
+                    color: canPost ? '#ffffff' : 'rgba(255, 255, 255, 0.7)'
+                  }}
+                  className="font-bold px-4 py-1.5 rounded-full text-[15px] transition-all hover:opacity-90 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Posting...' : 'Post'}
                 </button>
