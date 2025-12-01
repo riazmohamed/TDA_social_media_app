@@ -3,13 +3,11 @@
 import { useState, useEffect } from 'react';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  // Initialize state with initialValue or undefined
   const [storedValue, setStoredValue] = useState<T>(initialValue);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // useEffect runs only on the client side
+  // Load from localStorage on mount
   useEffect(() => {
-    setIsMounted(true);
     try {
       const item = window.localStorage.getItem(key);
       if (item) {
@@ -18,21 +16,24 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     } catch (error) {
       console.error('Error reading localStorage key "' + key + '": ', error);
     }
+    setIsHydrated(true);
   }, [key]);
 
-  // Function to update state and localStorage
-  const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (isMounted) {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+  // Save to localStorage when value changes (after hydration)
+  useEffect(() => {
+    if (isHydrated) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(storedValue));
+      } catch (error) {
+        console.error('Error setting localStorage key "' + key + '": ', error);
       }
-    } catch (error) {
-      console.error('Error setting localStorage key "' + key + '": ', error);
     }
+  }, [key, storedValue, isHydrated]);
+
+  const setValue = (value: T | ((val: T) => T)) => {
+    const valueToStore = value instanceof Function ? value(storedValue) : value;
+    setStoredValue(valueToStore);
   };
 
-  // Return the stored value (which will be initialValue on first SSR render) and the setter
-  return [storedValue, setValue] as const;
+  return [storedValue, setValue, isHydrated] as const;
 }

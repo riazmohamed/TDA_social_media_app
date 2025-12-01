@@ -8,7 +8,7 @@ import { useDatabase } from '@/lib/db';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { activeUser, createUser, updateUser, getPostsWithUsers } = useDatabase();
+  const { activeUser, isHydrated, createUser, updateUser, getPostsWithUsers } = useDatabase();
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -16,6 +16,7 @@ export default function ProfilePage() {
 
   const userPosts = activeUser ? getPostsWithUsers(activeUser.id).filter(p => p.userId === activeUser.id) : [];
 
+  // All hooks must be called before any conditional returns
   useEffect(() => {
     if (activeUser) {
       setUsername(activeUser.username);
@@ -42,6 +43,17 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while hydrating
+  if (!isHydrated) {
+    return (
+      <Layout activeUser={null}>
+        <div className="flex justify-center items-center min-h-96">
+          <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
 
   // If user exists, show profile view
   if (activeUser && isEditing) {

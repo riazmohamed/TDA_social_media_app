@@ -9,21 +9,28 @@ import { useDatabase } from '@/lib/db';
 
 export default function FeedPage() {
   const router = useRouter();
-  const { activeUser, getPostsWithUsers, toggleLike } = useDatabase();
+  const { activeUser, isHydrated, getPostsWithUsers, toggleLike } = useDatabase();
   const posts = getPostsWithUsers(activeUser?.id);
 
   useEffect(() => {
-    if (!activeUser) {
+    // Only redirect after hydration is complete
+    if (isHydrated && !activeUser) {
       router.push('/profile');
     }
-  }, [activeUser, router]);
+  }, [activeUser, isHydrated, router]);
 
-  const handleLikeToggle = (postId: string) => {
-    if (activeUser) {
-      toggleLike(postId, activeUser.id);
-    }
-  };
+  // Show loading while hydrating
+  if (!isHydrated) {
+    return (
+      <Layout activeUser={null}>
+        <div className="flex justify-center items-center min-h-96">
+          <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
 
+  // Redirect if no user (after hydration)
   if (!activeUser) {
     return (
       <Layout activeUser={null}>
@@ -33,6 +40,12 @@ export default function FeedPage() {
       </Layout>
     );
   }
+
+  const handleLikeToggle = (postId: string) => {
+    if (activeUser) {
+      toggleLike(postId, activeUser.id);
+    }
+  };
 
   return (
     <Layout activeUser={activeUser}>
