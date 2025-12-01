@@ -1,14 +1,85 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/organisms/Layout';
 import PostCard from '@/components/organisms/PostCard';
 import CreatePostForm from './components/CreatePostForm';
 import { useDatabase } from '@/lib/db';
+import { PostWithUser } from '@/types';
+
+// Dummy data for Following tab
+const dummyFollowingPosts: PostWithUser[] = [
+  {
+    id: 'dummy_1',
+    userId: 'dummy_user_1',
+    content: 'Just shipped a new feature! React Server Components are amazing for performance. The future of web development is here.',
+    timestamp: Date.now() - 1000 * 60 * 30, // 30 mins ago
+    likeCount: 142,
+    isLiked: false,
+    user: {
+      id: 'dummy_user_1',
+      username: 'Sarah Chen',
+      avatar: undefined
+    }
+  },
+  {
+    id: 'dummy_2',
+    userId: 'dummy_user_2',
+    content: 'Hot take: TypeScript has made JavaScript actually enjoyable to write. Fight me.',
+    timestamp: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
+    likeCount: 89,
+    isLiked: true,
+    user: {
+      id: 'dummy_user_2',
+      username: 'Alex Rivera',
+      avatar: undefined
+    }
+  },
+  {
+    id: 'dummy_3',
+    userId: 'dummy_user_3',
+    content: 'Day 100 of learning to code. Built my first full-stack app today. Never give up on your dreams!',
+    timestamp: Date.now() - 1000 * 60 * 60 * 5, // 5 hours ago
+    likeCount: 1247,
+    isLiked: false,
+    user: {
+      id: 'dummy_user_3',
+      username: 'Jordan Lee',
+      avatar: undefined
+    }
+  },
+  {
+    id: 'dummy_4',
+    userId: 'dummy_user_4',
+    content: 'The best code is no code at all. Sometimes the simplest solution is just... not building the feature.',
+    timestamp: Date.now() - 1000 * 60 * 60 * 8, // 8 hours ago
+    likeCount: 203,
+    isLiked: false,
+    user: {
+      id: 'dummy_user_4',
+      username: 'Morgan Taylor',
+      avatar: undefined
+    }
+  },
+  {
+    id: 'dummy_5',
+    userId: 'dummy_user_5',
+    content: 'Just discovered Tailwind CSS and my productivity went through the roof. Why did I wait so long to try it?',
+    timestamp: Date.now() - 1000 * 60 * 60 * 12, // 12 hours ago
+    likeCount: 67,
+    isLiked: true,
+    user: {
+      id: 'dummy_user_5',
+      username: 'Casey Williams',
+      avatar: undefined
+    }
+  }
+];
 
 export default function FeedPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   const { activeUser, isHydrated, getPostsWithUsers, toggleLike } = useDatabase();
   const posts = getPostsWithUsers(activeUser?.id);
 
@@ -56,12 +127,23 @@ export default function FeedPage() {
         </div>
         {/* Tab Navigation */}
         <div className="flex">
-          <button className="flex-1 py-4 hover:bg-background-hover transition-colors relative">
-            <span className="font-bold text-text">For you</span>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-brand rounded-full" />
+          <button
+            onClick={() => setActiveTab('foryou')}
+            className="flex-1 py-4 hover:bg-background-hover transition-colors relative"
+          >
+            <span className={activeTab === 'foryou' ? 'font-bold text-text' : 'text-text-secondary'}>For you</span>
+            {activeTab === 'foryou' && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-brand rounded-full" />
+            )}
           </button>
-          <button className="flex-1 py-4 hover:bg-background-hover transition-colors">
-            <span className="text-text-secondary">Following</span>
+          <button
+            onClick={() => setActiveTab('following')}
+            className="flex-1 py-4 hover:bg-background-hover transition-colors relative"
+          >
+            <span className={activeTab === 'following' ? 'font-bold text-text' : 'text-text-secondary'}>Following</span>
+            {activeTab === 'following' && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-brand rounded-full" />
+            )}
           </button>
         </div>
       </header>
@@ -71,26 +153,36 @@ export default function FeedPage() {
 
       {/* Feed */}
       <div>
-        {posts.length === 0 ? (
-          <div className="px-4 py-10 text-center">
-            <div className="max-w-sm mx-auto">
-              <h2 className="text-[31px] font-extrabold text-text mb-2">
-                Welcome to Social!
-              </h2>
-              <p className="text-text-secondary text-[15px] mb-6">
-                This is the best place to see what&apos;s happening in your world. Share your first post!
-              </p>
-              <svg viewBox="0 0 24 24" className="w-40 h-40 mx-auto fill-background-tertiary">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
+        {activeTab === 'foryou' ? (
+          posts.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <div className="max-w-sm mx-auto">
+                <h2 className="text-[31px] font-extrabold text-text mb-2">
+                  Welcome to Social!
+                </h2>
+                <p className="text-text-secondary text-[15px] mb-6">
+                  This is the best place to see what&apos;s happening in your world. Share your first post!
+                </p>
+                <svg viewBox="0 0 24 24" className="w-40 h-40 mx-auto fill-background-tertiary">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </div>
             </div>
-          </div>
+          ) : (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLikeToggle={handleLikeToggle}
+              />
+            ))
+          )
         ) : (
-          posts.map((post) => (
+          dummyFollowingPosts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
-              onLikeToggle={handleLikeToggle}
+              onLikeToggle={() => {}}
             />
           ))
         )}
