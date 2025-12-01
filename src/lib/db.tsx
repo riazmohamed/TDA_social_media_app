@@ -1,19 +1,46 @@
 'use client';
 
+import { createContext, useContext, ReactNode } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { LS_KEYS } from '@/lib/constants';
 import { User, Post, Like, CreateUserData, CreatePostData, PostWithUser } from '@/types';
 
-export function useDatabase() {
+interface DatabaseContextType {
+  // State
+  isHydrated: boolean;
+
+  // Data
+  users: User[];
+  posts: Post[];
+  likes: Like[];
+  activeUser: User | null;
+
+  // User operations
+  createUser: (userData: CreateUserData) => User;
+  updateUser: (userId: string, userData: Partial<User>) => User | undefined;
+  setActiveUser: (user: User | null) => void;
+
+  // Post operations
+  createPost: (postData: CreatePostData) => Post;
+  deletePost: (postId: string) => void;
+  getPostsWithUsers: (currentUserId?: string) => PostWithUser[];
+  getPostWithUser: (postId: string, currentUserId?: string) => PostWithUser | null;
+
+  // Like operations
+  toggleLike: (postId: string, userId: string) => boolean;
+  isPostLiked: (postId: string, userId: string) => boolean;
+}
+
+const DatabaseContext = createContext<DatabaseContextType | null>(null);
+
+export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [users, setUsers, usersHydrated] = useLocalStorage<User[]>(LS_KEYS.USERS, []);
   const [posts, setPosts, postsHydrated] = useLocalStorage<Post[]>(LS_KEYS.POSTS, []);
   const [likes, setLikes, likesHydrated] = useLocalStorage<Like[]>(LS_KEYS.LIKES, []);
   const [activeUser, setActiveUser, activeUserHydrated] = useLocalStorage<User | null>(LS_KEYS.ACTIVE_USER, null);
 
-  // Check if all data is hydrated from localStorage
   const isHydrated = usersHydrated && postsHydrated && likesHydrated && activeUserHydrated;
 
-  // User operations
   const createUser = (userData: CreateUserData) => {
     const newUser: User = {
       ...userData,
@@ -38,7 +65,6 @@ export function useDatabase() {
     return updatedUsers.find(user => user.id === userId);
   };
 
-  // Post operations
   const createPost = (postData: CreatePostData) => {
     const newPost: Post = {
       ...postData,
@@ -54,24 +80,20 @@ export function useDatabase() {
     const updatedPosts = posts.filter(post => post.id !== postId);
     setPosts(updatedPosts);
 
-    // Remove associated likes
     const updatedLikes = likes.filter(like => like.postId !== postId);
     setLikes(updatedLikes);
   };
 
-  // Like operations
   const toggleLike = (postId: string, userId: string) => {
     const existingLike = likes.find(l => l.postId === postId && l.userId === userId);
 
     if (existingLike) {
-      // Remove like
       setLikes(likes.filter(l => l.id !== existingLike.id));
       setPosts(posts.map(p =>
         p.id === postId ? { ...p, likeCount: Math.max(0, p.likeCount - 1) } : p
       ));
       return false;
     } else {
-      // Add like
       const newLike: Like = {
         id: `like_${Date.now()}`,
         postId,
@@ -90,7 +112,6 @@ export function useDatabase() {
     return likes.some(l => l.postId === postId && l.userId === userId);
   };
 
-  // Get posts with user data
   const getPostsWithUsers = (currentUserId?: string): PostWithUser[] => {
     return posts
       .sort((a, b) => b.timestamp - a.timestamp)
@@ -110,7 +131,6 @@ export function useDatabase() {
       });
   };
 
-  // Get single post with user data
   const getPostWithUser = (postId: string, currentUserId?: string): PostWithUser | null => {
     const post = posts.find(p => p.id === postId);
     if (!post) return null;
@@ -129,29 +149,34 @@ export function useDatabase() {
     };
   };
 
-  return {
-    // State
+  const value: DatabaseContextType = {
     isHydrated,
-
-    // Data
     users,
     posts,
     likes,
     activeUser,
-
-    // User operations
     createUser,
     updateUser,
     setActiveUser,
-
-    // Post operations
     createPost,
     deletePost,
     getPostsWithUsers,
     getPostWithUser,
-
-    // Like operations
     toggleLike,
     isPostLiked
   };
+
+  return (
+    <DatabaseContext.Provider value={value}>
+      {children}
+    </DatabaseContext.Provider>
+  );
+}
+
+export function useDatabase() {
+  const context = useContext(DatabaseContext);
+  if (!context) {
+    throw new Error('useDatabase must be used within a DatabaseProvider');
+  }
+  return context;
 }
