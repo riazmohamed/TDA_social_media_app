@@ -59,9 +59,8 @@ a {
   text-decoration: none;
 }
 
-/* Button reset */
+/* Button reset - only reset border and font, not background */
 button {
-  background: none;
   border: none;
   cursor: pointer;
   font: inherit;
